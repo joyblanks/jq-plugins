@@ -1,20 +1,27 @@
 {
-"name": "zfakeselect",
-"title": "zfakeselect",
-"description": "jQuery plugin for Select dropdown on ie in restricted space.",
-"keywords": [
-"select",
-"dropdown",
-"ie"
-],
-"version": "1.0",
-"author": {
-"name": "Joy Biswas"
-},
-"maintainers": [],
-"homepage": "https://github.com/joyblanks/jq-plugins/",
-"download": "http://code.jquery.com/#zfakeselect",
-"dependencies": {
-"jquery": ">=1.7"
-}
+  "name": "zfakeselect",
+  "title": "zfakeselect",
+  "description": "jQuery plugin for Select dropdown on ie in restricted space.",
+  "keywords": [
+  "select",
+  "dropdown",
+  "ie"
+  ],
+  "version": "1.0",
+  "author": {
+  "name": "Joy Biswas"
+  },
+  "maintainers": [],
+  "homepage": "https://github.com/joyblanks/jq-plugins/",
+  "download": "http://code.jquery.com/#zfakeselect",
+  "licenses":[
+    {
+      "type":"MIT"
+      ,"url":"http://opensource.org/licenses/MIT"
+      
+    }
+  ],
+  "dependencies": {
+    "jquery": ">=1.7"
+  }
 }
