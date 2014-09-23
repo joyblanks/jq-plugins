@@ -1,3 +1,27 @@
+/*
+The MIT License (MIT)
+
+Copyright (c) 2014 Joy Biswas
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+*/
+
 /*********************************************************************************************************************
 * jquery.zfakeselect.plugin
 * Description: Makes IE select dropdowns usable in a shrinked environment
@@ -21,17 +45,19 @@
 							//width assigned to the select options combo box (if width is smaller than option max will override by run time max)
 			,'scrollEnable'	:300
 							//scroll enabled if height reaches this value
-			,'browser'		:(document.all)
+			,'browser'		:document.all
 							 //browser check to run on browser (currently set to run for IE only) - note document.all > true (if ie) | false (if anything else)
-			,'fontsize'		:8
+			,'fontsize'		:6.8
 							//each char size to consume
-			,'cfakeCombo'	:{'border':'2px outset #7b9ebd','overflow':'hidden','padding':'0px 3px 0px 0px','border-width':'1px 1px 1px 2px','background':'#FFF','margin':'0px','position':'absolute'}
+			,'scrollEffect'	:'#document'
+							//the scrolling element to close the fakeselect
+			,'cfakeCombo'	:{'border':'2px outset #000000','overflow':'hidden','padding':'0px 1px 0px 0px','border-width':'1px 1px 1px 1px','background':'#FFF','margin':'0px','position':'absolute'}
 							//css for the combo dropdown box
-			,'cfakeSel'		:{'text-align':'left','color':'#000','background':'#FFF','width':'inherit','padding':'0px 1px','cursor':'default','border':'1px dotted #FFF','border-width':'1px 0px','margin':'0px'}
+			,'cfakeSel'		:{'background':'#FFF','text-align':'left','color':'#000','width':'auto','padding':'0px 1px','cursor':'default','border':'1px dotted #FFF','border-width':'1px 0px','margin':'0px'}
 							//css Class for the option tags in fake combo(css class pushed to head)
-			,'cfakeSelHover':{'color':'#FFF !important','background':'#3169C6','cursor':'default'}
+			,'cfakeSelHover':{'background':'#000066','color':'#FFF !important','cursor':'default'}
 							//css class for the option tags in fake combo (onmouseover) - (css class pushed to head)
-			,'randClassId'	:Math.floor(Math.random()*(9999999-1+1)+1)
+			,'randClassId'	:Math.floor((Math.random()*9999999)+1)
 							//random id attached to a css rule for more than one fake select obj in page
 		};
 		
@@ -45,30 +71,48 @@
 		
 		//jQuery chaining
 		return this.each(function(){
+			//original select El
+			var sel = $(this).width(p.selectWidth);
+			
 			//browser implementation
 			if(!p.browser){
 				return true;
 			}
-			
-			//original select El
-			var sel = $(this).width(p.selectWidth);
-			
+			sel.hover(function(event){
+				$('#wp_'+p.randClassId).show().css({margin:getcssCompositeProp(this,'margin'),padding:getcssCompositeProp(this,'padding'),left:$(this).offset().left,top:$(this).offset().top,width:$(this).width(),height:$(this).height()+2});
+			});
+
 			//span wrapper makes unclickable
-			var wrap = sel.after('<span class=selectWrpSpn></span>').next();
-			wrap.css({margin:getcssCompositeProp(sel,'margin'),padding:getcssCompositeProp(sel,'padding'),left:sel.position().left,top:sel.position().top,width:sel.width()+2,height:sel.height()+2,opacity:0,position:'absolute',background:'#ccc'});
+			var wrap = sel.after('<span id="wp_'+p.randClassId+'" ref="'+sel.attr('id')+'" class=selectWrpSpn></span>').next();
+			wrap.css({margin:getcssCompositeProp(sel,'margin'),padding:getcssCompositeProp(sel,'padding'),left:sel.offset().left,top:sel.offset().top,width:sel.width(),height:sel.height()+2,opacity:0,position:'absolute',background:'#ccc'});
+			wrap.mouseout(function(event){$(this).hide();});
 			
 			//close fake select box on click
 			$(document).on('mousedown', function (e) {
+				var t = $(e.target);
+				if(t.hasClass('selectWrpSpn') && t.attr('ref') == $('#fakeSel').attr('ref')){
+					t.attr({'status':'open'});
+					return true;
+				}
+				if (t.closest("#fakeSel").length === 0) {
+					$("#fakeSel").remove();
+				}
+			});
+			$(p.scrollEffect?p.scrollEffect:window).on('scroll', function (e) {
 				if ($(e.target).closest("#fakeSel").length === 0) {$("#fakeSel").remove();}
 			});
-			
 			//push CSS to head
 			throwOutCSS([['p.cfakeSel', p.cfakeSel], ['p.cfakeSelHover', p.cfakeSelHover]], p.randClassId);
 			
 			//define the clcik event on select dropdown(when the span wrapperer is clicked)
 			wrap.click(function(event){
 				//the fake select dropdown combo box
-				var fakeSel = $('#fakeSel').remove();//remove if exists
+				var fakeSel = $('#fakeSel');
+				
+				if(fakeSel.length>0 && $(this).attr('status')=='open'){
+					fakeSel.remove();
+					return false;
+				}
 				
 				//option tags
 				var opts = sel.children(),opt;
@@ -79,13 +123,13 @@
 				//create options using p tag inside fake combo box
 				var nOpts = '';
 				opts.each(function(){
-					opt = $(this);nOpts += '<p class="cfakeSel'+p.randClassId+(opt.is(':selected')?(' cfakeSelHover'+p.randClassId):'')+'" dt='+opt.val()+'>'+opt.text()+'</p>';
+					opt = $(this);nOpts += '<p class="cfakeSel'+p.randClassId+(opt.is(':selected')?(' cfakeSelHover'+p.randClassId):'')+'">'+(opt.text().trim()==""?'&nbsp;':opt.text().trim())+'</p>';
 				});
 				nOpts = $(nOpts);//make jquery objects of options
 				
 				//add events to options
 				nOpts.hover(function(){$(this).siblings().removeClass('cfakeSelHover'+p.randClassId);$(this).toggleClass('cfakeSelHover'+p.randClassId)});
-				nOpts.click(function(){sel.val($(this).attr('dt')).trigger('change');fakeSel.remove();});
+				nOpts.click(function(){sel.prop('selectedIndex',$(this).index()).trigger('change');fakeSel.remove();});
 				
 				//append opts to combo
 				fakeSel = $('#fakeSel').append(nOpts);
@@ -101,11 +145,16 @@
 				var scrollEnable = maxOptHgt==p.scrollEnable;
 				
 				//calculate max width if each opt width > supplied width than max of opt width + 30px for scroll
-				var maxOptWidth = fakeSel.find('p').max(function() {return $(this).text().length; }) * p.fontsize;//8 as fontsiz default
-				maxOptWidth = (maxOptWidth>p.optionWidth)?maxOptWidth:p.optionWidth + (scrollEnable?30:0);
+				/*var maxOptWidth = fakeSel.find('p').max(function() {return $(this).text().trim().length; }) * p.fontsize;//8 as fontsiz default
+				maxOptWidth = Math.floor((maxOptWidth>p.optionWidth)?maxOptWidth:p.optionWidth + (scrollEnable?30:0));
+				*/
+				var tW = p.selectWidth;
+				sel.width('auto');
+				var maxOptWidth = sel.get(0).clientWidth + (scrollEnable?30:0);
+				sel.width(tW);
 				
 				//combo box css for showoff + css for absolute position 
-				fakeSel.css(p.cfakeCombo).css({width:maxOptWidth,height:maxOptHgt,left:pos.x,top:(pos.y+sel.height()),'overflow-y':(scrollEnable?'scroll':'hidden'),'margin':sel.css('margin')});
+				fakeSel.css(p.cfakeCombo).css({width:maxOptWidth,height:maxOptHgt,left:pos.x,top:(sel.height()+$(sel).offset().top+2),'overflow-y':(scrollEnable?'scroll':'hidden'),'margin':sel.css('margin')});
 				
 				//return event to reach document
 				event.stopPropagation();
