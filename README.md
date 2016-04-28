@@ -1,4 +1,1 @@
-jq-plugins
-==========
-
-my custome jQuery Plugins
+Javascript Utilities
